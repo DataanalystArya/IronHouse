@@ -358,11 +358,11 @@ export default function App() {
       };
     }
     return {
-      hidden: { opacity: 0, y: 16 },
+      hidden: { opacity: 0, y: 10 },
       show: {
         opacity: 1,
         y: 0,
-        transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
       },
     };
   }, [reduceMotion]);
@@ -379,7 +379,7 @@ export default function App() {
       return { hidden: { opacity: 1, y: 0 }, show: { opacity: 1, y: 0 } };
     }
     return {
-      hidden: { opacity: 0, y: 28 },
+      hidden: { opacity: 0, y: 12 },
       show: {
         opacity: 1,
         y: 0,
@@ -400,11 +400,11 @@ export default function App() {
       return { hidden: { opacity: 1, y: 0 }, show: { opacity: 1, y: 0 } };
     }
     return {
-      hidden: { opacity: 0, y: 36 },
+      hidden: { opacity: 0, y: 14 },
       show: {
         opacity: 1,
         y: 0,
-        transition: { duration: 0.68, ease: easeSmooth },
+        transition: { duration: durMed, ease: easeSmooth },
       },
     };
   }, [reduceMotion]);

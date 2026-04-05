@@ -23,6 +23,7 @@ import {
 } from 'react-icons/hi2';
 import { FaInstagram, FaXTwitter, FaYoutube } from 'react-icons/fa6';
 import { SiTiktok } from 'react-icons/si';
+import Lenis from '@studio-freight/lenis';
 import './App.css';
 
 function videoMimeType(url) {
@@ -177,21 +178,36 @@ function LazyVideo({ src, poster, className, priority = false }) {
   const optimizedSrc = isMobile && !priority ? optimizeMediaUrl(src, 720) : src;
 
   return (
-    <video
-      ref={ref}
-      className={className}
-      src={inView || priority ? optimizedSrc : undefined}
-      poster={poster}
-      muted
-      loop
-      playsInline
-      autoPlay
-      preload={priority ? 'auto' : 'none'}
+    <div
       style={{
         opacity: inView || priority ? 1 : 0,
         transition: 'opacity 0.4s ease',
       }}
-    />
+    >
+      {(!isMobile || priority) && (
+        <video
+          ref={ref}
+          className={className}
+          src={inView || priority ? optimizedSrc : undefined}
+          poster={poster}
+          muted
+          loop
+          playsInline
+          autoPlay
+          preload={priority ? 'auto' : 'none'}
+        />
+      )}
+      {(isMobile && !priority) && (
+        <div 
+          className={className} 
+          style={{ 
+            backgroundImage: `url("${poster}")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }} 
+        />
+      )}
+    </div>
   );
 }
 
@@ -220,12 +236,12 @@ export default function App() {
   const heroBgY = useTransform(
     scrollYProgress,
     [0, 1],
-    reduceMotion ? ['0%', '0%'] : ['0%', '20%']
+    reduceMotion || isMobile ? ['0%', '0%'] : ['0%', '20%']
   );
   const heroContentY = useTransform(
     scrollYProgress,
     [0, 1],
-    reduceMotion ? ['0%', '0%'] : ['0%', '6%']
+    reduceMotion || isMobile ? ['0%', '0%'] : ['0%', '6%']
   );
 
 
@@ -265,6 +281,23 @@ export default function App() {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   const starDisplay = reviewHover || reviewRating;
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      smoothTouch: false, // native touch is usually better on mobile with high performance
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    return () => lenis.destroy();
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 48);

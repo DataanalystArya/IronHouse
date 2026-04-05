@@ -176,11 +176,7 @@ export default function App() {
     video: media.videoPool?.length ? media.videoPool[i % media.videoPool.length] : null,
   }));
 
-  const trainerSlots = 4;
-  const trainerData = trainers.map((t, i) => ({
-    ...t,
-    image: media.trainerImages[i] || t.image,
-  }));
+
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [transformIndex, setTransformIndex] = useState(0);

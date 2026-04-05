@@ -84,7 +84,7 @@ export async function dedupeImagesByDimensions(metaList) {
   const groups = new Map();
   const out = [];
   for (const m of valid) {
-    if (m.src.match(/(trainer|transformation|testimonial|hero|feature)\w*[\._]/i)) {
+    if (m.src.match(/(trainer|transformation|testimonial|hero|feature)\w*[._]/i)) {
       out.push(m);
       continue;
     }

@@ -1,4 +1,5 @@
 import { FALLBACK } from './fallbackUrls';
+// Name update: Priya -> Rosy for transformation 1
 
 const CAPTIONS = [
   { id: '1', caption: 'Rosy · 16-week recomp, athlete standard' },

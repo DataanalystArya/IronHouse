@@ -155,9 +155,10 @@ function optimizeMediaUrl(url, w = 1200) {
   return `${url}${separator}nf_resize=fit&w=${w}`;
 }
 
-function LazyVideo({ src, poster, className, priority = false }) {
+function LazyMedia({ type = 'bg', src, poster, className, priority = false, alt = '', children, ...rest }) {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -166,9 +167,9 @@ function LazyVideo({ src, poster, className, priority = false }) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         setInView(entry.isIntersecting);
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && type === 'video') {
           el.play().catch(() => {});
-        } else {
+        } else if (type === 'video') {
           el.pause();
         }
       },
@@ -177,23 +178,97 @@ function LazyVideo({ src, poster, className, priority = false }) {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [type]);
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const optimizedSrc = isMobile && !priority ? optimizeMediaUrl(src, 720) : src;
+  const optimizedSrc = isMobile && !priority ? optimizeMediaUrl(src, type === 'video' ? 720 : 800) : src;
+  const actualSrc = inView || priority ? optimizedSrc : undefined;
+
+  if (type === 'video') {
+    return (
+      <>
+        <AnimatePresence>
+          {!loaded && (
+            <motion.div
+              className={`skeleton-shimmer ${className}`}
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+            />
+          )}
+        </AnimatePresence>
+        <video
+          ref={ref}
+          className={className}
+          src={actualSrc}
+          poster={poster}
+          muted
+          loop
+          playsInline
+          autoPlay
+          preload={priority ? 'auto' : 'none'}
+          onLoadedData={() => setLoaded(true)}
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.6s ease' }}
+          {...rest}
+        />
+      </>
+    );
+  }
+
+  if (type === 'image') {
+    return (
+      <>
+        <AnimatePresence>
+          {!loaded && (
+            <motion.div
+              className="skeleton-shimmer"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              style={{ position: 'absolute', inset: 0, borderRadius: 'inherit' }}
+            />
+          )}
+        </AnimatePresence>
+        <img
+          ref={ref}
+          className={className}
+          src={actualSrc}
+          alt={alt}
+          onLoad={() => setLoaded(true)}
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.6s ease' }}
+          {...rest}
+        />
+      </>
+    );
+  }
 
   return (
-    <video
+    <div
       ref={ref}
       className={className}
-      src={inView || priority ? optimizedSrc : undefined}
-      poster={poster}
-      muted
-      loop
-      playsInline
-      autoPlay
-      preload={priority ? 'auto' : 'none'}
-    />
+      style={{
+        ...(actualSrc ? { backgroundImage: `url("${actualSrc}")` } : {}),
+      }}
+      {...rest}
+    >
+      <AnimatePresence>
+        {!loaded && (
+          <motion.div
+            className="skeleton-shimmer"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            style={{ borderRadius: 'inherit' }}
+          />
+        )}
+      </AnimatePresence>
+      {actualSrc && (
+        <img src={actualSrc} style={{ display: 'none' }} onLoad={() => setLoaded(true)} alt="" />
+      )}
+      <div style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.6s ease', height: '100%', width: '100%' }}>
+         {children}
+      </div>
+    </div>
   );
 }
 
@@ -583,7 +658,8 @@ export default function App() {
           >
             <div className="hero__video-wrap-inner">
               {media.heroVideo ? (
-                <LazyVideo
+                <LazyMedia
+                  type="video"
                   src={media.heroVideo}
                   poster={media.heroPoster}
                   className="hero__video"
@@ -726,14 +802,16 @@ export default function App() {
                   {...featureHover}
                 >
                   {!video && (
-                    <div
+                    <LazyMedia
+                      type="bg"
                       className="feature-card__bg"
-                      style={{ backgroundImage: `url("${cover}")` }}
+                      src={cover}
                       aria-hidden="true"
                     />
                   )}
                   {video && (
-                    <LazyVideo
+                    <LazyMedia
+                      type="video"
                       src={video}
                       poster={cover}
                       className="feature-card__video"
@@ -812,12 +890,11 @@ export default function App() {
                   }
                 >
                   <div className="trainer-card__media">
-                    <img
+                    <LazyMedia
+                      type="image"
                       className="trainer-card__img"
                       src={t.image}
                       alt={`${t.name}, ${t.role}`}
-                      loading="lazy"
-                      decoding="async"
                     />
                     <div className="trainer-card__gradient" aria-hidden="true" />
                     <div className="trainer-card__info">
@@ -881,35 +958,32 @@ export default function App() {
                   className={`transforms__slide ${transformSlides[transformIndex]?.combined ? 'transforms__slide--combined' : ''}`}
                 >
                   {transformSlides[transformIndex]?.combined ? (
-                    <div
+                    <LazyMedia
+                      type="bg"
                       className="transforms__combined"
-                      style={{
-                        backgroundImage: `url("${transformSlides[transformIndex]?.combined}")`,
-                      }}
+                      src={transformSlides[transformIndex]?.combined}
                     >
                       <div className="transforms__labels">
                         <span className="transforms__tag">Before</span>
                         <span className="transforms__tag">After</span>
                       </div>
-                    </div>
+                    </LazyMedia>
                   ) : (
                     <>
-                      <div
+                      <LazyMedia
+                        type="bg"
                         className="transforms__half"
-                        style={{
-                          backgroundImage: `url("${transformSlides[transformIndex]?.before}")`,
-                        }}
+                        src={transformSlides[transformIndex]?.before}
                       >
                         <span className="transforms__tag">Before</span>
-                      </div>
-                      <div
+                      </LazyMedia>
+                      <LazyMedia
+                        type="bg"
                         className="transforms__half"
-                        style={{
-                          backgroundImage: `url("${transformSlides[transformIndex]?.after}")`,
-                        }}
+                        src={transformSlides[transformIndex]?.after}
                       >
                         <span className="transforms__tag">After</span>
-                      </div>
+                      </LazyMedia>
                     </>
                   )}
                 </motion.div>

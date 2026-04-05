@@ -138,7 +138,12 @@ const durMed = 0.32;
 
 function scrollToId(hash) {
   const el = document.querySelector(hash);
-  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!el) return;
+  if (window.lenis) {
+    window.lenis.scrollTo(el, { duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
+  } else {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function optimizeMediaUrl(url, w = 1200) {
@@ -184,29 +189,17 @@ function LazyVideo({ src, poster, className, priority = false }) {
         transition: 'opacity 0.4s ease',
       }}
     >
-      {(!isMobile || priority) && (
-        <video
-          ref={ref}
-          className={className}
-          src={inView || priority ? optimizedSrc : undefined}
-          poster={poster}
-          muted
-          loop
-          playsInline
-          autoPlay
-          preload={priority ? 'auto' : 'none'}
-        />
-      )}
-      {(isMobile && !priority) && (
-        <div 
-          className={className} 
-          style={{ 
-            backgroundImage: `url("${poster}")`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }} 
-        />
-      )}
+      <video
+        ref={ref}
+        className={className}
+        src={inView || priority ? optimizedSrc : undefined}
+        poster={poster}
+        muted
+        loop
+        playsInline
+        autoPlay
+        preload={priority ? 'auto' : 'none'}
+      />
     </div>
   );
 }
@@ -287,16 +280,25 @@ export default function App() {
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      smoothTouch: false, // native touch is usually better on mobile with high performance
+      smoothTouch: false, // Disabling smoothTouch gives the best native momentum scrolling on mobile
+      lerp: 0.08,
+      touchMultiplier: 1.5,
     });
+    
+    window.lenis = lenis;
 
+    let rafId;
     function raf(time) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
-    return () => lenis.destroy();
+    return () => {
+      window.lenis = undefined;
+      lenis.destroy();
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   useEffect(() => {

@@ -31,13 +31,44 @@
   --max-w: 82rem;
 }
 
+html,
+body,
+#root,
+.app {
+  margin: 0;
+  padding: 0;
+  position: relative !important;
+}
+
+/* Custom Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 10px;
+  border: 2px solid var(--color-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #222 var(--color-bg);
+}
+
 /* ——— Base ——— */
 .app {
   min-height: 100vh;
   background: var(--color-bg);
   color: var(--color-text);
-  overflow-x: hidden;
-  position: relative;
+  overflow: visible !important; /* Allow Lenis to manage scroll */
+  position: relative !important;
 }
 
 /* Ambient radial glow — fixed canvas */
@@ -262,7 +293,9 @@
   bottom: 0;
   width: min(20rem, 85vw);
   z-index: 95;
-  background: var(--color-surface);
+  background: rgba(10, 10, 10, 0.82);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
   border-left: 1px solid var(--color-border);
   padding: calc(var(--nav-h) + 1.5rem) 1.5rem 2rem;
   display: flex;
@@ -270,6 +303,7 @@
   gap: 0.35rem;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4);
 }
 
 .nav__drawer-link {
@@ -481,9 +515,9 @@
 
 @media (max-width: 768px) {
   .hero__heading {
-    filter: none;
+    filter: drop-shadow(0 4px 12px rgba(225, 29, 72, 0.15));
     color: #fff;
-    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -521,11 +555,11 @@
 
 @media (max-width: 768px) {
   .hero__metric {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: rgba(15, 15, 15, 0.9);
-    animation: none; /* Disable animation on mobile for max CPU efficiency */
-    transform: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(15, 15, 15, 0.75);
+    /* Enabled subtle floating on mobile now that assets are optimized */
+    animation: float 8s ease-in-out infinite; 
   }
 }
 

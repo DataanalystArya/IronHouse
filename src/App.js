@@ -159,7 +159,7 @@ export default function App() {
   const heroContentY = useTransform(
     scrollYProgress,
     [0, 1],
-    reduceMotion ? ['0%', '0%'] : ['0%', '9%']
+    reduceMotion ? ['0%', '0%'] : ['0%', '6%']
   );
 
   const trainers = useMemo(
@@ -298,12 +298,11 @@ export default function App() {
       };
     }
     return {
-      hidden: { opacity: 0, x: -40, y: 0 },
+      hidden: { opacity: 0, y: 16 },
       show: {
         opacity: 1,
-        x: 0,
         y: 0,
-        transition: { duration: durSlow, ease: easeSmooth },
+        transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
       },
     };
   }, [reduceMotion]);

@@ -780,16 +780,16 @@ body,
   height: 100%;
   object-fit: cover;
   z-index: 0;
-  opacity: 0.45;
+  opacity: 1; /* Keep at 100% since bg is removed */
   transform: translateZ(0);
   will-change: transform, opacity;
-  transition: opacity 0.8s var(--ease-premium), transform 0.8s var(--ease-premium);
+  transition: opacity 0.8s var(--ease-premium), transform 0.8s var(--ease-premium), filter 0.8s var(--ease-premium);
   filter: saturate(1.1) contrast(1.08);
 }
 
 .feature-card:hover .feature-card__video {
-  opacity: 0.85;
-  transform: scale(1.04) translateZ(0);
+  transform: scale(1.06) translateZ(0);
+  filter: saturate(1.1) contrast(1.08) brightness(0.7) blur(2px);
 }
 
 .feature-card:hover .feature-card__bg {

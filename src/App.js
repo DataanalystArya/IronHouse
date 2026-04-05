@@ -183,24 +183,17 @@ function LazyVideo({ src, poster, className, priority = false }) {
   const optimizedSrc = isMobile && !priority ? optimizeMediaUrl(src, 720) : src;
 
   return (
-    <div
-      style={{
-        opacity: inView || priority ? 1 : 0,
-        transition: 'opacity 0.4s ease',
-      }}
-    >
-      <video
-        ref={ref}
-        className={className}
-        src={inView || priority ? optimizedSrc : undefined}
-        poster={poster}
-        muted
-        loop
-        playsInline
-        autoPlay
-        preload={priority ? 'auto' : 'none'}
-      />
-    </div>
+    <video
+      ref={ref}
+      className={className}
+      src={inView || priority ? optimizedSrc : undefined}
+      poster={poster}
+      muted
+      loop
+      playsInline
+      autoPlay
+      preload={priority ? 'auto' : 'none'}
+    />
   );
 }
 
@@ -732,11 +725,13 @@ export default function App() {
                   style={{ transformStyle: 'preserve-3d' }}
                   {...featureHover}
                 >
-                  <div
-                    className="feature-card__bg"
-                    style={{ backgroundImage: `url("${cover}")` }}
-                    aria-hidden="true"
-                  />
+                  {!video && (
+                    <div
+                      className="feature-card__bg"
+                      style={{ backgroundImage: `url("${cover}")` }}
+                      aria-hidden="true"
+                    />
+                  )}
                   {video && (
                     <LazyVideo
                       src={video}

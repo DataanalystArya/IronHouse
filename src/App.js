@@ -132,12 +132,21 @@ const TESTIMONIALS_BASE = [
 
 const easePremium = [0.16, 1, 0.3, 1];
 const easeSmooth = [0.25, 0.46, 0.45, 0.94];
-const durSlow = 0.72;
-const durMed = 0.52;
+const durSlow = 0.42;
+const durMed = 0.32;
 
 function scrollToId(hash) {
   const el = document.querySelector(hash);
   el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function optimizeMediaUrl(url, w = 1200) {
+  if (!url || typeof url !== 'string' || url.startsWith('data:')) return url;
+  if (!url.includes('netlify.app') && !url.startsWith('/')) return url;
+  // Use Netlify Image CDN or similar if available, or just return.
+  // For this project, we'll assume Netlify processing is enabled via params
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}nf_resize=fit&w=${w}`;
 }
 
 function LazyVideo({ src, poster, className, priority = false }) {
@@ -164,11 +173,14 @@ function LazyVideo({ src, poster, className, priority = false }) {
     return () => observer.disconnect();
   }, []);
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const optimizedSrc = isMobile && !priority ? optimizeMediaUrl(src, 720) : src;
+
   return (
     <video
       ref={ref}
       className={className}
-      src={inView || priority ? src : undefined}
+      src={inView || priority ? optimizedSrc : undefined}
       poster={poster}
       muted
       loop
@@ -177,7 +189,7 @@ function LazyVideo({ src, poster, className, priority = false }) {
       preload={priority ? 'auto' : 'none'}
       style={{
         opacity: inView || priority ? 1 : 0,
-        transition: 'opacity 0.6s ease',
+        transition: 'opacity 0.4s ease',
       }}
     />
   );
@@ -186,7 +198,18 @@ function LazyVideo({ src, poster, className, priority = false }) {
 export default function App() {
   const reduceMotion = useReducedMotion();
   const media = useSiteMedia();
-  const transformSlides = media.transformations;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  const transformSlides = useMemo(() => {
+    if (!media.transformations) return [];
+    return media.transformations.map(s => ({
+      ...s,
+      before: isMobile ? optimizeMediaUrl(s.before, 640) : s.before,
+      after: isMobile ? optimizeMediaUrl(s.after, 640) : s.after,
+      combined: isMobile ? optimizeMediaUrl(s.combined, 960) : s.combined
+    }));
+  }, [media.transformations, isMobile]);
+
   const heroRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -205,17 +228,25 @@ export default function App() {
     reduceMotion ? ['0%', '0%'] : ['0%', '6%']
   );
 
+
+
   const trainers = useMemo(
-    () => TRAINERS_BASE.map((t, i) => ({ ...t, image: media.trainerImages[i] })),
-    [media]
+    () => TRAINERS_BASE.map((t, i) => ({ 
+      ...t, 
+      image: isMobile ? optimizeMediaUrl(media.trainerImages[i], 640) : media.trainerImages[i] 
+    })),
+    [media, isMobile]
   );
   const testimonials = useMemo(
-    () => TESTIMONIALS_BASE.map((t, i) => ({ ...t, photo: media.testimonialPhotos[i] })),
-    [media]
+    () => TESTIMONIALS_BASE.map((t, i) => ({ 
+      ...t, 
+      photo: isMobile ? optimizeMediaUrl(media.testimonialPhotos[i], 200) : media.testimonialPhotos[i] 
+    })),
+    [media, isMobile]
   );
   const featuresWithCovers = features.map((f, i) => ({
     ...f,
-    cover: media.featureImages ? media.featureImages[i] : null,
+    cover: media.featureImages ? (isMobile ? optimizeMediaUrl(media.featureImages[i], 800) : media.featureImages[i]) : null,
     video: media.videoPool?.length ? media.videoPool[i % media.videoPool.length] : null,
   }));
 
@@ -656,7 +687,7 @@ export default function App() {
               variants={featureStagger}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: '-60px' }}
+              viewport={{ once: true, margin: '20px' }}
             >
               {featuresWithCovers.map(({ title, body, Icon, cover, video }) => (
                 <motion.article
@@ -702,7 +733,7 @@ export default function App() {
               className="section__label"
               initial={reduceMotion ? false : { opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '20px' }}
               transition={{ duration: durMed, ease: easePremium }}
             >
               Trainers
@@ -712,7 +743,7 @@ export default function App() {
               className="section__title section__title--trainers"
               initial={reduceMotion ? false : { opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '20px' }}
               transition={{ duration: durMed, ease: easePremium, delay: 0.06 }}
             >
               Coaching team
@@ -721,7 +752,7 @@ export default function App() {
               className="section__lead section__lead--trainers"
               initial={reduceMotion ? false : { opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '20px' }}
               transition={{ duration: durMed, ease: easePremium, delay: 0.1 }}
             >
               Certified coaches across strength, conditioning, and nutrition.
@@ -731,7 +762,7 @@ export default function App() {
               variants={trainerStagger}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: '-55px' }}
+              viewport={{ once: true, margin: '20px' }}
             >
               {trainers.map((t) => (
                 <motion.article
@@ -932,7 +963,7 @@ export default function App() {
                 className="price-card"
                 initial={reduceMotion ? false : { opacity: 0, y: 36 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
+                viewport={{ once: true, margin: '20px' }}
                 transition={{ duration: durSlow, ease: easePremium }}
                 {...priceHover}
               >
@@ -958,7 +989,7 @@ export default function App() {
                 className="price-card price-card--featured"
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
+                viewport={{ once: true, margin: '20px' }}
                 transition={{ duration: 0.8, ease: easePremium, delay: 0.1 }}
                 {...priceHover}
               >
@@ -1000,7 +1031,7 @@ export default function App() {
                 className="price-card"
                 initial={reduceMotion ? false : { opacity: 0, y: 36 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
+                viewport={{ once: true, margin: '20px' }}
                 transition={{ duration: durSlow, ease: easePremium, delay: 0.16 }}
                 {...priceHover}
               >
@@ -1041,7 +1072,7 @@ export default function App() {
               className="section__label"
               initial={reduceMotion ? false : { opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '20px' }}
               transition={{ duration: durMed, ease: easePremium }}
             >
               Testimonials
@@ -1051,7 +1082,7 @@ export default function App() {
               className="section__title"
               initial={reduceMotion ? false : { opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '20px' }}
               transition={{ duration: durMed, ease: easePremium, delay: 0.06 }}
             >
               Word from the floor.
@@ -1150,7 +1181,7 @@ export default function App() {
               className="section__label"
               initial={reduceMotion ? false : { opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '20px' }}
               transition={{ duration: durMed, ease: easePremium }}
             >
               Feedback
@@ -1160,7 +1191,7 @@ export default function App() {
               className="section__title"
               initial={reduceMotion ? false : { opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '20px' }}
               transition={{ duration: durMed, ease: easePremium, delay: 0.06 }}
             >
               Rate your experience
@@ -1169,7 +1200,7 @@ export default function App() {
               className="section__lead"
               initial={reduceMotion ? false : { opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '20px' }}
               transition={{ duration: durMed, ease: easePremium, delay: 0.1 }}
             >
               Five-star scale plus your words—we read every submission.
@@ -1191,7 +1222,7 @@ export default function App() {
                 onSubmit={handleReviewSubmit}
                 initial={reduceMotion ? false : { opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
+                viewport={{ once: true, margin: '20px' }}
                 transition={{ duration: durSlow, ease: easePremium }}
               >
                 <div className="review__field">

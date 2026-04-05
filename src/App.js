@@ -140,6 +140,49 @@ function scrollToId(hash) {
   el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function LazyVideo({ src, poster, className, priority = false }) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          el.play().catch(() => {});
+        } else {
+          el.pause();
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <video
+      ref={ref}
+      className={className}
+      src={inView || priority ? src : undefined}
+      poster={poster}
+      muted
+      loop
+      playsInline
+      autoPlay
+      preload={priority ? 'auto' : 'none'}
+      style={{
+        opacity: inView || priority ? 1 : 0,
+        transition: 'opacity 0.6s ease',
+      }}
+    />
+  );
+}
+
 export default function App() {
   const reduceMotion = useReducedMotion();
   const media = useSiteMedia();
@@ -228,21 +271,7 @@ export default function App() {
     setTestimonialIndex((i) => (i - 1 + testimonials.length) % testimonials.length);
   }, [testimonials.length]);
 
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el || !media.heroVideo || typeof IntersectionObserver === 'undefined') {
-      return undefined;
-    }
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) el.play().catch(() => {});
-        else el.pause();
-      },
-      { threshold: 0.2 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [media.heroVideo]);
+
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -495,21 +524,12 @@ export default function App() {
           >
             <div className="hero__video-wrap-inner">
               {media.heroVideo ? (
-                <video
-                  ref={videoRef}
-                  className="hero__video"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
+                <LazyVideo
+                  src={media.heroVideo}
                   poster={media.heroPoster}
-                >
-                  <source
-                    src={media.heroVideo}
-                    type={videoMimeType(media.heroVideo)}
-                  />
-                </video>
+                  className="hero__video"
+                  priority
+                />
               ) : null}
               {!media.heroVideo ? (
                 <div
@@ -652,13 +672,10 @@ export default function App() {
                     aria-hidden="true"
                   />
                   {video && (
-                    <video
-                      className="feature-card__video"
+                    <LazyVideo
                       src={video}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
+                      poster={cover}
+                      className="feature-card__video"
                     />
                   )}
                   <div className="feature-card__inner">
